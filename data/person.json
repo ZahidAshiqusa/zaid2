@@ -70,5 +70,11 @@
     "personName": "Zeeshan",
     "action": "exit",
     "timestamp": "2026-06-05T17:26:48.678Z"
+  },
+  {
+    "id": "prs_gwhkiedesqxoi",
+    "personName": "Zeeshan",
+    "action": "enter",
+    "timestamp": "2026-06-05T17:27:02.422Z"
   }
 ]
