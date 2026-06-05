@@ -5,5 +5,12 @@
     "personOrPurpose": "zaid",
     "amount": 600,
     "timestamp": "2026-06-05T13:57:38.927Z"
+  },
+  {
+    "id": "wlt_qnll67fihhw16",
+    "type": "in",
+    "personOrPurpose": "zaid",
+    "amount": 150,
+    "timestamp": "2026-06-05T13:57:51.118Z"
   }
 ]
