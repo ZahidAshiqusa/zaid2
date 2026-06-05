@@ -1,0 +1,86 @@
+// Dashboard page entry point - index.html
+import { fetchSection } from '../shared/api.js';
+import { formatCurrency } from '../shared/utils.js';
+import { initNotifications, setupInstallPrompt, showToast } from '../shared/notifications.js';
+import { renderItems } from '../sections/items.js';
+import { renderWallet } from '../sections/wallet.js';
+import { renderPerson } from '../sections/person.js';
+import { renderMaintenance } from '../sections/maintenance.js';
+import { renderSamples } from '../sections/samples.js';
+import { renderClipping } from '../sections/clipping.js';
+
+const SECTIONS = ['items', 'wallet', 'person', 'maintenance', 'samples', 'clipping'];
+let previousData = {};
+
+async function loadSection(section) {
+  try {
+    const data = await fetchSection(section);
+
+    // Check if data changed and show toast
+    if (previousData[section] && JSON.stringify(data) !== JSON.stringify(previousData[section])) {
+      showToast('Data Updated', `${section.charAt(0).toUpperCase() + section.slice(1)} section has been updated`, 'success');
+    }
+    previousData[section] = data;
+
+    const container = document.getElementById(`${section}-body`);
+    if (!container) return;
+
+    switch (section) {
+      case 'items':
+        renderItems(container, data, { isAdmin: false });
+        document.getElementById('items-count').textContent = `${data.length} items`;
+        document.getElementById('stat-items').textContent = data.length;
+        break;
+      case 'wallet':
+        renderWallet(container, data, { isAdmin: false });
+        const balance = data.reduce((acc, e) => acc + (e.type === 'in' ? Number(e.amount) : -Number(e.amount)), 0);
+        document.getElementById('stat-wallet').textContent = formatCurrency(balance);
+        document.getElementById('stat-wallet').style.color = balance >= 0 ? 'var(--success)' : 'var(--danger)';
+        break;
+      case 'person':
+        renderPerson(container, data, { isAdmin: false });
+        const today = new Date().toDateString();
+        const todayCount = data.filter(e => new Date(e.timestamp).toDateString() === today).length;
+        document.getElementById('stat-activity').textContent = todayCount;
+        break;
+      case 'maintenance':
+        renderMaintenance(container, data, { isAdmin: false });
+        const openIssues = data.filter(e => e.status !== 'solved').length;
+        document.getElementById('stat-issues').textContent = openIssues;
+        break;
+      case 'samples':
+        renderSamples(container, data, { isAdmin: false });
+        break;
+      case 'clipping':
+        renderClipping(container, data, { isAdmin: false });
+        break;
+    }
+  } catch (err) {
+    console.error(`Error loading ${section}:`, err);
+    const container = document.getElementById(`${section}-body`);
+    if (container) {
+      container.innerHTML = `<div class="empty-state"><p style="color:var(--danger);">Failed to load ${section}</p></div>`;
+    }
+  }
+}
+
+async function loadAllSections() {
+  await Promise.all(SECTIONS.map(s => loadSection(s)));
+}
+
+// Initial load
+loadAllSections();
+
+// Poll every 30 seconds
+setInterval(loadAllSections, 30000);
+
+// Initialize PWA features
+initNotifications();
+setupInstallPrompt();
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(err => {
+    console.log('SW registration failed:', err.message);
+  });
+}

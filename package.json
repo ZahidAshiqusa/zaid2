@@ -1,0 +1,9 @@
+{
+  "name": "zaid-bwp-stock-manager",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "web-push": "^3.6.7",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
