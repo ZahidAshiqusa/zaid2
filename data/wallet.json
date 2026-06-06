@@ -96,5 +96,12 @@
     "personOrPurpose": "WATER",
     "amount": 150,
     "timestamp": "2026-06-05T15:14:44.448Z"
+  },
+  {
+    "id": "wlt_os6wijt9ib7lp",
+    "type": "out",
+    "personOrPurpose": "ZAID",
+    "amount": 200,
+    "timestamp": "2026-06-06T04:27:38.048Z"
   }
 ]
