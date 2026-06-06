@@ -83,6 +83,7 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 body {
@@ -91,6 +92,8 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 a {
@@ -108,6 +111,8 @@ a:hover {
   max-width: 1400px;
   margin: 0 auto;
   padding: var(--space-lg);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ---------- Header ---------- */
@@ -167,7 +172,7 @@ a:hover {
 /* ---------- Section Cards ---------- */
 .sections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-lg);
 }
 
@@ -726,7 +731,7 @@ a:hover {
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .app-container {
     padding: var(--space-md);
   }
@@ -888,9 +893,23 @@ a:hover {
   border: 1px solid var(--danger-border);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .dual-column,
   .attendance-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Orientation lock - show warning on mobile landscape */
+@media (max-width: 900px) and (orientation: landscape) {
+  #rotate-warning {
+    display: flex !important;
+  }
+
+  .app-header,
+  .app-container,
+  .app-footer,
+  .install-banner {
+    display: none !important;
   }
 }

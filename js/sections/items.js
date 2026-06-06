@@ -14,7 +14,7 @@ export function renderItems(container, data, { isAdmin = false, onRefresh } = {}
 
   const grid = document.createElement('div');
   grid.className = 'items-grid';
-  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;';
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;';
 
   data.forEach(item => {
     const card = document.createElement('div');

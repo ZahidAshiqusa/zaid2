@@ -41,20 +41,20 @@ export function renderClipping(container, data, { isAdmin = false, onRefresh } =
     <div class="balance-display balance-positive" style="font-size:1rem;padding:10px;">
       Total Clipped In: <strong>${totalSize}</strong> <span style="font-size:0.75rem;color:var(--text-muted);">(${inEntries.length} entries)</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
-      <div style="background:var(--success-bg);border:1px solid var(--success-border);border-radius:var(--radius-sm);padding:8px;">
-        <div style="font-size:0.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Total Rs.</div>
-        <div style="font-size:1.1rem;font-weight:700;color:var(--success);font-family:var(--font-mono);">${formatCurrency(totalRupees)}</div>
-        <div style="font-size:0.6rem;color:var(--text-muted);">${totalSize} × 12</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;">
+      <div style="background:var(--success-bg);border:1px solid var(--success-border);border-radius:var(--radius-sm);padding:6px 4px;">
+        <div style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Total Rs.</div>
+        <div style="font-size:0.95rem;font-weight:700;color:var(--success);font-family:var(--font-mono);">${formatCurrency(totalRupees)}</div>
+        <div style="font-size:0.55rem;color:var(--text-muted);">${totalSize} × 12</div>
       </div>
-      <div style="background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--radius-sm);padding:8px;">
-        <div style="font-size:0.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Transferred</div>
-        <div style="font-size:1.1rem;font-weight:700;color:var(--warning);font-family:var(--font-mono);">${formatCurrency(totalTransferred)}</div>
-        <div style="font-size:0.6rem;color:var(--text-muted);">${transferEntries.length} transfers</div>
+      <div style="background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--radius-sm);padding:6px 4px;">
+        <div style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Transferred</div>
+        <div style="font-size:0.95rem;font-weight:700;color:var(--warning);font-family:var(--font-mono);">${formatCurrency(totalTransferred)}</div>
+        <div style="font-size:0.55rem;color:var(--text-muted);">${transferEntries.length} transfers</div>
       </div>
-      <div style="background:${remaining > 0 ? 'var(--danger-bg)' : 'var(--success-bg)'};border:1px solid ${remaining > 0 ? 'var(--danger-border)' : 'var(--success-border)'};border-radius:var(--radius-sm);padding:8px;">
-        <div style="font-size:0.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Remaining</div>
-        <div style="font-size:1.1rem;font-weight:700;color:${remaining > 0 ? 'var(--danger)' : 'var(--success)'};font-family:var(--font-mono);">${formatCurrency(remaining)}</div>
+      <div style="background:${remaining > 0 ? 'var(--danger-bg)' : 'var(--success-bg)'};border:1px solid ${remaining > 0 ? 'var(--danger-border)' : 'var(--success-border)'};border-radius:var(--radius-sm);padding:6px 4px;">
+        <div style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Remaining</div>
+        <div style="font-size:0.95rem;font-weight:700;color:${remaining > 0 ? 'var(--danger)' : 'var(--success)'};font-family:var(--font-mono);">${formatCurrency(remaining)}</div>
       </div>
     </div>
     ${isAdmin ? `<button class="btn btn-success btn-sm" id="transfer-btn" style="width:100%;justify-content:center;">
