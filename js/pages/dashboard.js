@@ -45,7 +45,7 @@ async function loadSection(section) {
         document.getElementById('stat-wallet').style.color = balance >= 0 ? 'var(--success)' : 'var(--danger)';
         break;
       case 'person':
-        renderPerson(container, data, { isAdmin: false });
+        renderPerson(container, data, { isAdmin: false, onRefresh: () => loadSection('person') });
         const today = new Date().toDateString();
         const todayCount = data.filter(e => new Date(e.timestamp).toDateString() === today).length;
         document.getElementById('stat-activity').textContent = todayCount;
@@ -113,7 +113,7 @@ function renderSection(section, container, data) {
   switch (section) {
     case 'items': renderItems(container, data, opts); break;
     case 'wallet': renderWallet(container, data, opts); break;
-    case 'person': renderPerson(container, data, opts); break;
+    case 'person': renderPerson(container, data, { isAdmin: false, onRefresh: () => loadSection('person') }); break;
     case 'maintenance': renderMaintenance(container, data, opts); break;
     case 'samples': renderSamples(container, data, opts); break;
     case 'clipping': renderClipping(container, data, opts); break;
