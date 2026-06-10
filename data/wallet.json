@@ -131,5 +131,12 @@
     "personOrPurpose": "HARDWORKS NUT",
     "amount": 350,
     "timestamp": "2026-06-10T19:12:45.423Z"
+  },
+  {
+    "id": "wlt_v7s6e3ip8w3xe",
+    "type": "out",
+    "personOrPurpose": "WATER",
+    "amount": 150,
+    "timestamp": "2026-06-10T19:13:19.822Z"
   }
 ]
