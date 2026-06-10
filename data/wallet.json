@@ -116,34 +116,34 @@
     "type": "in",
     "personOrPurpose": "ZAHID MAHMOOD",
     "amount": 1000,
-    "timestamp": "2026-06-10T19:11:20.442Z"
+    "timestamp": "2026-06-08T13:11:20.442Z"
   },
   {
     "id": "wlt_11gum3e6nl661",
     "type": "out",
     "personOrPurpose": "WATER",
     "amount": 200,
-    "timestamp": "2026-06-10T19:11:51.607Z"
+    "timestamp": "2026-06-08T12:11:51.607Z"
   },
   {
     "id": "wlt_ey9e6n9evevp2",
     "type": "out",
     "personOrPurpose": "HARDWORKS NUT",
     "amount": 350,
-    "timestamp": "2026-06-10T19:12:45.423Z"
+    "timestamp": "2026-06-08T10:12:45.423Z"
   },
   {
     "id": "wlt_v7s6e3ip8w3xe",
     "type": "out",
     "personOrPurpose": "WATER",
     "amount": 150,
-    "timestamp": "2026-06-10T19:13:19.822Z"
+    "timestamp": "2026-06-09T12:13:19.822Z"
   },
   {
     "id": "wlt_h0apy5k052n76",
     "type": "out",
     "personOrPurpose": "NEW OPERATORS",
     "amount": 1000,
-    "timestamp": "2026-06-10T19:13:42.658Z"
+    "timestamp": "2026-06-10T16:13:42.658Z"
   }
 ]
