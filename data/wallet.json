@@ -96,5 +96,12 @@
     "personOrPurpose": "WATER",
     "amount": 150,
     "timestamp": "2026-06-05T15:14:44.448Z"
+  },
+  {
+    "id": "wlt_tf4m0wf6m21qb",
+    "type": "in",
+    "personOrPurpose": "FAREED SAHAB",
+    "amount": 200,
+    "timestamp": "2026-06-10T19:10:34.402Z"
   }
 ]
