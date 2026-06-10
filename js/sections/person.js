@@ -11,7 +11,7 @@ export function renderPerson(container, data, { isAdmin = false, onRefresh } = {
 
   // Extract unique workers dynamically from data
   const workerSet = new Set();
-  const defaultWorkers = ['Nadeem', 'Zeeshan'];
+  const defaultWorkers = ['ADNAN', 'SHERRY'];
   defaultWorkers.forEach(w => workerSet.add(w));
   if (data && data.length > 0) {
     data.forEach(e => { if (e.personName) workerSet.add(e.personName); });
