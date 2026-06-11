@@ -188,7 +188,7 @@ function createRow(entry, isAdmin, onRefresh) {
   row.innerHTML = `
     <div class="entry-info">
       <div class="entry-title">${escapeHtml(entry.clipperName)}</div>
-      <div class="entry-subtitle">Size: ${escapeHtml(entry.size) || '-'} · ${formatTimestamp(entry.timestamp)}</div>
+      <div class="entry-subtitle">Yard: ${escapeHtml(entry.size) || '-'} · ${formatTimestamp(entry.timestamp)}</div>
     </div>
     ${isAdmin ? `
       <div class="entry-actions" style="opacity:1;">
