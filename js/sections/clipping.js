@@ -205,7 +205,7 @@ function createRow(entry, isAdmin, onRefresh) {
       fields: [
         { label: 'Type', value: entry.type === 'in' ? 'Clipped In' : 'Out for Clipping' },
         { label: 'Clipper Name', value: entry.clipperName },
-        { label: 'Size', value: entry.size || '-' },
+        { label: 'Yard', value: entry.size || '-' },
         { label: 'Timestamp', value: formatTimestamp(entry.timestamp) },
         { label: 'ID', value: entry.id }
       ],
