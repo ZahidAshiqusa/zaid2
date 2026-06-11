@@ -11,26 +11,33 @@
   <link rel="apple-touch-icon" href="/icons/icon-192.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/hub.css">
 </head>
 <body>
-  <!-- Apply theme before render to prevent flash -->
+  <!-- Apply theme before render -->
   <script>
     (function() {
       var t = localStorage.getItem('zaid_theme') || 'light';
       document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
+
+  <!-- Animated background particles -->
+  <div class="hub-bg-particles" id="particles"></div>
+
   <!-- Header -->
-  <header class="app-header">
+  <header class="app-header hub-header">
     <div class="header-content">
       <div class="app-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <div class="hub-logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
         <div>
-          <div class="app-title">ZAID BWP STOCK MANAGER</div>
-          <div class="app-subtitle">Inventory & Business Dashboard</div>
+          <div class="app-title">ZAID BWP</div>
+          <div class="app-subtitle">Stock Manager</div>
         </div>
       </div>
       <div class="header-actions">
@@ -46,10 +53,6 @@
           <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
           <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
-        <a href="/admin.html" class="nav-link">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Admin
-        </a>
       </div>
     </div>
   </header>
@@ -57,253 +60,159 @@
   <!-- Install Banner -->
   <div id="install-banner" class="install-banner" style="display:none;">
     <span class="install-banner-text">Install this app on your device for quick access</span>
-    <button class="btn btn-primary btn-sm" id="install-btn">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Install App
-    </button>
+    <button class="btn btn-primary btn-sm" id="install-btn">Install App</button>
   </div>
 
-  <!-- Main Content -->
-  <main class="app-container">
-    <!-- Stats Bar -->
-    <div class="stats-bar" id="stats-bar">
-      <div class="stat-card">
-        <div class="stat-card-title">Total Items</div>
-        <div class="stat-card-value" id="stat-items">-</div>
+  <!-- Main Hub -->
+  <main class="app-container hub-container">
+    <!-- Quick Stats Row -->
+    <div class="hub-stats" id="hub-stats">
+      <div class="hub-stat">
+        <div class="hub-stat-icon" style="--stat-color:var(--accent);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <div class="hub-stat-info">
+          <div class="hub-stat-value" id="stat-items">-</div>
+          <div class="hub-stat-label">Items</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-card-title">Wallet Balance</div>
-        <div class="stat-card-value" id="stat-wallet">-</div>
+      <div class="hub-stat">
+        <div class="hub-stat-icon" style="--stat-color:var(--success);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+        </div>
+        <div class="hub-stat-info">
+          <div class="hub-stat-value" id="stat-wallet">-</div>
+          <div class="hub-stat-label">Wallet</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-card-title">Open Issues</div>
-        <div class="stat-card-value" id="stat-issues">-</div>
+      <div class="hub-stat">
+        <div class="hub-stat-icon" style="--stat-color:var(--warning);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <div class="hub-stat-info">
+          <div class="hub-stat-value" id="stat-issues">-</div>
+          <div class="hub-stat-label">Issues</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-card-title">Today's Activity</div>
-        <div class="stat-card-value" id="stat-activity">-</div>
+      <div class="hub-stat">
+        <div class="hub-stat-icon" style="--stat-color:var(--info);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="hub-stat-info">
+          <div class="hub-stat-value" id="stat-activity">-</div>
+          <div class="hub-stat-label">Today</div>
+        </div>
       </div>
     </div>
 
-    <!-- Search Bar -->
-    <div style="margin-bottom:var(--space-lg);">
-      <div style="position:relative;max-width:500px;margin:0 auto;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="dashboard-search" placeholder="Search items, wallet, person, maintenance, samples, clipping..." style="width:100%;padding:12px 14px 12px 42px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:0.875rem;background:var(--bg-card);color:var(--text-primary);transition:border-color var(--transition),box-shadow var(--transition);">
-      </div>
-    </div>
+    <!-- Navigation Grid -->
+    <div class="hub-grid">
+      <a href="/section.html?page=items" class="hub-card hub-card-items" data-delay="0">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <div class="hub-card-content">
+          <div class="hub-card-title">Items</div>
+          <div class="hub-card-desc">Inventory management & tracking</div>
+        </div>
+        <div class="hub-card-badge" id="badge-items">-</div>
+        <div class="hub-card-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
 
-    <!-- Sections Grid -->
-    <div class="dashboard-grid">
-      <!-- Items Section -->
-      <section class="section-card readonly" id="section-items">
-        <div class="section-header">
-          <div class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-            Items Management
-          </div>
-          <div class="section-header-right">
-            <span class="section-badge badge-primary" id="items-count">0 items</span>
-            <div class="download-dropdown" data-section="items">
-              <button class="download-btn" title="Download">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <div class="download-menu">
-                <button class="download-option" data-format="xlsx">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Excel (.xlsx)
-                </button>
-                <button class="download-option" data-format="png">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  Screenshot (.png)
-                </button>
-                <button class="download-option" data-format="pdf">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  PDF Document
-                </button>
-              </div>
-            </div>
-          </div>
+      <a href="/section.html?page=wallet" class="hub-card hub-card-wallet" data-delay="1">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
         </div>
-        <div class="section-body" id="items-body">
-          <div class="loading-overlay"><span class="loading-spinner"></span> Loading...</div>
+        <div class="hub-card-content">
+          <div class="hub-card-title">Wallet</div>
+          <div class="hub-card-desc">Money in/out & balance tracking</div>
         </div>
-      </section>
+        <div class="hub-card-badge" id="badge-wallet">-</div>
+        <div class="hub-card-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
 
-      <!-- Wallet Section -->
-      <section class="section-card readonly" id="section-wallet">
-        <div class="section-header">
-          <div class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-            Wallet
-          </div>
-          <div class="section-header-right">
-            <span class="section-badge badge-success" id="wallet-balance">Rs. 0</span>
-            <div class="download-dropdown" data-section="wallet">
-              <button class="download-btn" title="Download">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <div class="download-menu">
-                <button class="download-option" data-format="xlsx">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Excel (.xlsx)
-                </button>
-                <button class="download-option" data-format="png">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  Screenshot (.png)
-                </button>
-                <button class="download-option" data-format="pdf">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  PDF Document
-                </button>
-              </div>
-            </div>
-          </div>
+      <a href="/section.html?page=person" class="hub-card hub-card-person" data-delay="2">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
-        <div class="section-body" id="wallet-body">
-          <div class="loading-overlay"><span class="loading-spinner"></span> Loading...</div>
+        <div class="hub-card-content">
+          <div class="hub-card-title">Person</div>
+          <div class="hub-card-desc">Attendance & hours tracking</div>
         </div>
-      </section>
+        <div class="hub-card-badge" id="badge-person">-</div>
+        <div class="hub-card-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
 
-      <!-- Person Section -->
-      <section class="section-card readonly" id="section-person">
-        <div class="section-header">
-          <div class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Person Details
-          </div>
-          <div class="section-header-right">
-            <span class="section-badge badge-primary" id="person-count">2 workers</span>
-            <div class="download-dropdown" data-section="person">
-              <button class="download-btn" title="Download">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <div class="download-menu">
-                <button class="download-option" data-format="xlsx">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Excel (.xlsx)
-                </button>
-                <button class="download-option" data-format="png">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  Screenshot (.png)
-                </button>
-                <button class="download-option" data-format="pdf">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  PDF Document
-                </button>
-              </div>
-            </div>
-          </div>
+      <a href="/section.html?page=maintenance" class="hub-card hub-card-maintenance" data-delay="3">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
         </div>
-        <div class="section-body" id="person-body">
-          <div class="loading-overlay"><span class="loading-spinner"></span> Loading...</div>
+        <div class="hub-card-content">
+          <div class="hub-card-title">Maintenance</div>
+          <div class="hub-card-desc">Complaints, issues & services</div>
         </div>
-      </section>
+        <div class="hub-card-badge" id="badge-maintenance">-</div>
+        <div class="hub-card-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
 
-      <!-- Maintenance Section -->
-      <section class="section-card readonly" id="section-maintenance">
-        <div class="section-header">
-          <div class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            Maintenance
-          </div>
-          <div class="section-header-right">
-            <span class="section-badge badge-warning" id="maintenance-count">0 open</span>
-            <div class="download-dropdown" data-section="maintenance">
-              <button class="download-btn" title="Download">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <div class="download-menu">
-                <button class="download-option" data-format="xlsx">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Excel (.xlsx)
-                </button>
-                <button class="download-option" data-format="png">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  Screenshot (.png)
-                </button>
-                <button class="download-option" data-format="pdf">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  PDF Document
-                </button>
-              </div>
-            </div>
-          </div>
+      <a href="/section.html?page=samples" class="hub-card hub-card-samples" data-delay="4">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v7l5 8H4l5-8V3z"/><line x1="8" y1="3" x2="16" y2="3"/></svg>
         </div>
-        <div class="section-body" id="maintenance-body">
-          <div class="loading-overlay"><span class="loading-spinner"></span> Loading...</div>
+        <div class="hub-card-content">
+          <div class="hub-card-title">Samples</div>
+          <div class="hub-card-desc">Sample in/out management</div>
         </div>
-      </section>
+        <div class="hub-card-badge" id="badge-samples">-</div>
+        <div class="hub-card-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
 
-      <!-- Samples Section -->
-      <section class="section-card readonly" id="section-samples">
-        <div class="section-header">
-          <div class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v7l5 8H4l5-8V3z"/><line x1="8" y1="3" x2="16" y2="3"/></svg>
-            Sample Management
-          </div>
-          <div class="section-header-right">
-            <span class="section-badge badge-primary" id="samples-count">0 entries</span>
-            <div class="download-dropdown" data-section="samples">
-              <button class="download-btn" title="Download">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <div class="download-menu">
-                <button class="download-option" data-format="xlsx">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Excel (.xlsx)
-                </button>
-                <button class="download-option" data-format="png">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  Screenshot (.png)
-                </button>
-                <button class="download-option" data-format="pdf">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  PDF Document
-                </button>
-              </div>
-            </div>
-          </div>
+      <a href="/section.html?page=clipping" class="hub-card hub-card-clipping" data-delay="5">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
         </div>
-        <div class="section-body" id="samples-body">
-          <div class="loading-overlay"><span class="loading-spinner"></span> Loading...</div>
+        <div class="hub-card-content">
+          <div class="hub-card-title">Clipping</div>
+          <div class="hub-card-desc">Clipping details & tracking</div>
         </div>
-      </section>
+        <div class="hub-card-badge" id="badge-clipping">-</div>
+        <div class="hub-card-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
 
-      <!-- Clipping Section -->
-      <section class="section-card readonly" id="section-clipping">
-        <div class="section-header">
-          <div class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
-            Clipping Details
-          </div>
-          <div class="section-header-right">
-            <span class="section-badge badge-primary" id="clipping-count">0 entries</span>
-            <div class="download-dropdown" data-section="clipping">
-              <button class="download-btn" title="Download">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <div class="download-menu">
-                <button class="download-option" data-format="xlsx">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Excel (.xlsx)
-                </button>
-                <button class="download-option" data-format="png">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  Screenshot (.png)
-                </button>
-                <button class="download-option" data-format="pdf">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  PDF Document
-                </button>
-              </div>
-            </div>
-          </div>
+      <a href="/admin.html" class="hub-card hub-card-admin" data-delay="6">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
-        <div class="section-body" id="clipping-body">
-          <div class="loading-overlay"><span class="loading-spinner"></span> Loading...</div>
+        <div class="hub-card-content">
+          <div class="hub-card-title">Admin</div>
+          <div class="hub-card-desc">Control panel & data management</div>
         </div>
-      </section>
+        <div class="hub-card-badge hub-badge-admin">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="hub-card-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
     </div>
   </main>
 
@@ -321,7 +230,7 @@
           WhatsApp
         </a>
       </div>
-      <div class="footer-version">v2.0.0 • Cloud Connected</div>
+      <div class="footer-version">v2.1.0 • Cloud Connected</div>
     </div>
   </footer>
 
@@ -329,13 +238,8 @@
   <div id="rotate-warning" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--bg-primary);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;">
     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:20px;color:var(--accent);"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
     <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">Please Rotate Your Device</h2>
-    <p style="font-size:0.9rem;color:var(--text-secondary);">This app works best in portrait mode.<br>Please rotate your device to continue.</p>
+    <p style="font-size:0.9rem;color:var(--text-secondary);">This app works best in portrait mode.</p>
   </div>
-
-  <!-- CDN Libraries for Download -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script type="module" src="/js/pages/dashboard.js"></script>
 </body>
