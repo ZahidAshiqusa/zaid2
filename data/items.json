@@ -19,10 +19,12 @@
   },
   {
     "id": "mph8oiqx86bdb",
-    "name": "GLITTER/CHOHA COLY SEQUENCE",
+    "name": "SEQUENCE",
     "number": "",
-    "quantity": 12,
-    "status": "available"
+    "quantity": "12",
+    "status": "available",
+    "model": "GLITTER/CHOHA COLY ",
+    "person": ""
   },
   {
     "id": "mph8nx0rpuczf",
