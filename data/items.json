@@ -1305,7 +1305,7 @@
     "id": "f460okjr1kqs3",
     "name": "TILLA",
     "number": "5000",
-    "quantity": 1,
+    "quantity": "10",
     "model": "L",
     "person": "MASTER KASHIF",
     "status": "available",
