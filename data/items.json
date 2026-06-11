@@ -37,10 +37,12 @@
   },
   {
     "id": "mph8mzg1vwnzt",
-    "name": "FAKE SILVER CD",
+    "name": "SEQUENCE CD",
     "number": "",
-    "quantity": 27,
-    "status": "available"
+    "quantity": "27",
+    "status": "available",
+    "model": "FAKE SILVER ",
+    "person": ""
   },
   {
     "id": "mph8mcyvgcevz",
