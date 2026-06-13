@@ -166,5 +166,12 @@
     "personOrPurpose": "ELECTRICIAN",
     "amount": 1400,
     "timestamp": "2026-06-13T09:48:35.076Z"
+  },
+  {
+    "id": "wlt_xt2zr7cbejfxk",
+    "type": "out",
+    "personOrPurpose": "MASTER",
+    "amount": 1250,
+    "timestamp": "2026-06-13T09:49:25.482Z"
   }
 ]
