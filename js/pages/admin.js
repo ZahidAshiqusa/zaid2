@@ -281,21 +281,33 @@ async function checkWhatsAppStatus() {
 window.linkWhatsApp = async function() {
   // Show loading
   showWaSection('wa-loading-section');
-  document.getElementById('wa-loading-text').textContent = 'Generating QR code... This may take a moment.';
+  document.getElementById('wa-loading-text').textContent = 'Connecting to WhatsApp servers... Please wait.';
   document.getElementById('wa-link-btn').style.display = 'none';
+  document.getElementById('wa-error-section').style.display = 'none';
 
   try {
+    // Use AbortController for a 58s timeout (API has 60s limit)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 58000);
+
     const res = await fetch('/api/whatsapp?action=link', {
       method: 'POST',
-      headers: waHeaders()
+      headers: waHeaders(),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: 'Server error ' + res.status }));
+      throw new Error(errData.error || errData.hint || 'API returned ' + res.status);
+    }
+
     const data = await res.json();
 
     if (data.status === 'qr') {
       // Show QR code
       showWaSection('wa-qr-section');
       document.getElementById('wa-qr-image').src = data.qr;
-
       // Start polling for connection
       pollWhatsAppLink();
     } else if (data.status === 'linked') {
@@ -308,23 +320,40 @@ window.linkWhatsApp = async function() {
       document.getElementById('wa-unlink-btn').style.display = 'inline-flex';
       updateWaButton(true);
       showToast('WhatsApp', 'WhatsApp linked successfully!', 'success');
+    } else if (data.status === 'error') {
+      // API returned an error
+      showWaSection('wa-status-section', 'wa-error-section');
+      document.getElementById('wa-error-text').textContent = data.message || 'WhatsApp service error. Please try again.';
+      document.getElementById('wa-link-btn').style.display = 'inline-flex';
     } else {
-      // Timeout or error
+      // Timeout or unknown status
       showWaSection('wa-status-section', 'wa-error-section');
       document.getElementById('wa-error-text').textContent = data.message || 'Failed to generate QR code. Please try again.';
       document.getElementById('wa-link-btn').style.display = 'inline-flex';
     }
   } catch (err) {
     showWaSection('wa-status-section', 'wa-error-section');
-    document.getElementById('wa-error-text').textContent = 'Connection error: ' + err.message;
+    const msg = err.name === 'AbortError'
+      ? 'Request timed out. The WhatsApp service may be busy. Please try again.'
+      : 'Connection error: ' + err.message;
+    document.getElementById('wa-error-text').textContent = msg;
     document.getElementById('wa-link-btn').style.display = 'inline-flex';
   }
 };
 
 function pollWhatsAppLink() {
-  // Poll status every 3 seconds for up to 60 seconds
+  // Poll status every 3 seconds for up to 55 seconds
   let attempts = 0;
-  const maxAttempts = 20;
+  const maxAttempts = 18;
+
+  // Show QR section with "waiting" message below the QR
+  function updatePollStatus(seconds) {
+    const hint = document.querySelector('.wa-qr-hint');
+    if (hint) {
+      hint.textContent = 'Waiting for scan... ' + seconds + 's elapsed — scan before it expires!';
+      hint.style.color = seconds > 30 ? 'var(--warning)' : '';
+    }
+  }
 
   async function poll() {
     attempts++;
@@ -347,12 +376,17 @@ function pollWhatsAppLink() {
     } catch { /* continue polling */ }
 
     if (attempts < maxAttempts) {
-      document.getElementById('wa-loading-text').textContent =
-        'Waiting for scan... (' + attempts * 3 + 's)';
+      updatePollStatus(attempts * 3);
       waPollTimer = setTimeout(poll, 3000);
     } else {
+      // Reset QR hint text
+      const hint = document.querySelector('.wa-qr-hint');
+      if (hint) {
+        hint.textContent = 'Open WhatsApp → Settings → Linked Devices → Link a Device';
+        hint.style.color = '';
+      }
       showWaSection('wa-status-section', 'wa-error-section');
-      document.getElementById('wa-error-text').textContent = 'QR code expired. Please try again.';
+      document.getElementById('wa-error-text').textContent = 'QR code expired or not scanned in time. Please try again.';
       document.getElementById('wa-link-btn').style.display = 'inline-flex';
     }
   }

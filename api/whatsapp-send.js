@@ -1,6 +1,8 @@
 // WhatsApp Send API - Send notifications when entries are added
 const { loadSession, loadConfig } = require('./_whatsapp-session');
 const { readFile } = require('./_github');
+const fs = require('fs');
+const path = require('path');
 
 // Numbers to notify
 const NOTIFY_NUMBERS = ['923244643714', '923711286436'];
@@ -10,41 +12,83 @@ const NOTIFY_NUMBERS = ['923244643714', '923711286436'];
  */
 async function createSocket() {
   const session = await loadSession();
-  if (!session || !session.creds) throw new Error('WhatsApp not linked');
+  if (!session || !session.creds) throw new Error('WhatsApp not linked - please link from admin panel first');
 
-  const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+  const baileys = require('@whiskeysockets/baileys');
+  const { default: makeWASocket, useMultiFileAuthState } = baileys;
   const pino = require('pino');
-  const fs = require('fs');
-  const path = require('path');
 
-  // Restore auth state from saved session
-  const sessionDir = '/tmp/wa-send-' + Date.now();
+  // Restore auth state from saved session to a unique temp dir
+  const sessionDir = '/tmp/wa-send-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   fs.mkdirSync(sessionDir, { recursive: true });
 
-  // Write creds file
+  // Write creds.json
   fs.writeFileSync(path.join(sessionDir, 'creds.json'), JSON.stringify(session.creds));
 
   // Write keys files
   if (session.keys) {
     for (const [key, value] of Object.entries(session.keys)) {
-      if (value && Object.keys(value).length > 0) {
-        fs.writeFileSync(path.join(sessionDir, key + '.json'), JSON.stringify(value));
+      try {
+        if (value && typeof value === 'object' && Object.keys(value).length > 0) {
+          fs.writeFileSync(path.join(sessionDir, key + '.json'), JSON.stringify(value));
+        }
+      } catch (e) {
+        console.log('Skipping key file:', key, e.message);
       }
     }
   }
 
   const { state } = await useMultiFileAuthState(sessionDir);
   const logger = pino({ level: 'silent' });
-  const { version } = await fetchLatestBaileysVersion();
+
+  // Get version with fallback
+  let version;
+  try {
+    const v = await baileys.fetchLatestBaileysVersion();
+    version = v.version;
+  } catch {
+    version = [2, 3000, 1021221121];
+  }
 
   const sock = makeWASocket({
     version,
     logger,
     auth: state,
-    browser: ['ZAID BWP', 'Chrome', '1.0.0']
+    browser: baileys.Browsers.ubuntu('ZAID BWP') || ['ZAID BWP', 'Chrome', '1.0.0'],
+    printQRInTerminal: false
   });
 
-  return sock;
+  // Return socket + cleanup function
+  return {
+    sock,
+    cleanup: async () => {
+      try { sock.end(new Error('cleanup')); } catch {}
+      try { fs.rmSync(sessionDir, { recursive: true, force: true }); } catch {}
+    }
+  };
+}
+
+/**
+ * Wait for socket connection to open
+ */
+function waitForConnection(sock, timeoutMs = 15000) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Connection timeout after ' + timeoutMs + 'ms'));
+    }, timeoutMs);
+
+    sock.ev.on('connection.update', (update) => {
+      if (update.connection === 'open') {
+        clearTimeout(timeout);
+        resolve();
+      }
+      if (update.connection === 'close') {
+        clearTimeout(timeout);
+        const reason = update.lastDisconnect?.error?.message || 'Connection closed';
+        reject(new Error(reason));
+      }
+    });
+  });
 }
 
 /**
@@ -146,45 +190,28 @@ module.exports = async function handler(req, res) {
     if (section && entry) {
       const message = formatEntryMessage(section, entry);
 
+      let ctx = null;
       try {
-        const sock = await createSocket();
-
-        // Wait for connection to open
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            try { sock.end(); } catch {}
-            reject(new Error('Connection timeout'));
-          }, 15000);
-
-          sock.ev.on('connection.update', (update) => {
-            if (update.connection === 'open') {
-              clearTimeout(timeout);
-              resolve();
-            }
-            if (update.connection === 'close') {
-              clearTimeout(timeout);
-              reject(new Error('Connection closed'));
-            }
-          });
-        });
+        ctx = await createSocket();
+        await waitForConnection(ctx.sock, 15000);
 
         // Send to all notify numbers
         const results = [];
         for (const num of NOTIFY_NUMBERS) {
           try {
             const jid = num + '@s.whatsapp.net';
-            await sock.sendMessage(jid, { text: message });
+            await ctx.sock.sendMessage(jid, { text: message });
             results.push({ number: num, status: 'sent' });
           } catch (err) {
             results.push({ number: num, status: 'failed', error: err.message });
           }
         }
 
-        try { sock.end(); } catch {}
-
+        await ctx.cleanup();
         return res.status(200).json({ success: true, results });
       } catch (err) {
         console.error('WhatsApp send error:', err.message);
+        if (ctx) try { await ctx.cleanup(); } catch {}
         return res.status(200).json({
           success: false,
           error: err.message,
@@ -203,16 +230,10 @@ module.exports = async function handler(req, res) {
  * Handle incoming commands (itemsms, itemspic, etc.)
  */
 async function handleCommand(command, senderJid, res) {
+  let ctx = null;
   try {
-    const sock = await createSocket();
-
-    await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Connection timeout')), 15000);
-      sock.ev.on('connection.update', (update) => {
-        if (update.connection === 'open') { clearTimeout(timeout); resolve(); }
-        if (update.connection === 'close') { clearTimeout(timeout); reject(new Error('Closed')); }
-      });
-    });
+    ctx = await createSocket();
+    await waitForConnection(ctx.sock, 15000);
 
     const cmd = (command || '').toLowerCase().trim();
     const targetJid = senderJid || NOTIFY_NUMBERS[0] + '@s.whatsapp.net';
@@ -240,7 +261,7 @@ async function handleCommand(command, senderJid, res) {
 
     const section = sectionMap[cmd];
     if (!section) {
-      await sock.sendMessage(targetJid, {
+      await ctx.sock.sendMessage(targetJid, {
         text: header + '❌ Unknown command.\n\nAvailable commands:\n'
           + '• itemsms - Items Excel\n• itemspic - Items Image\n'
           + '• walletms - Wallet Excel\n• walletpic - Wallet Image\n'
@@ -249,7 +270,7 @@ async function handleCommand(command, senderJid, res) {
           + '• samplesms - Samples Excel\n• samplespic - Samples Image\n'
           + '• clippingms - Clipping Excel\n• clippingpic - Clipping Image'
       });
-      try { sock.end(); } catch {}
+      await ctx.cleanup();
       return res.status(200).json({ success: true });
     }
 
@@ -258,7 +279,7 @@ async function handleCommand(command, senderJid, res) {
     const entries = Array.isArray(data) ? data : [];
 
     if (cmd.endsWith('pic')) {
-      // Send as formatted image (text-based summary)
+      // Send as formatted text summary (image-style)
       let text = header + `📊 *${section.toUpperCase()} DATA*\n━━━━━━━━━━━━━━━━━━\n`;
       text += `📋 Total Entries: *${entries.length}*\n\n`;
 
@@ -272,10 +293,9 @@ async function handleCommand(command, senderJid, res) {
 
       text += `\n━━━━━━━━━━━━━━━━━━\n⏰ _${new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })}_`;
 
-      await sock.sendMessage(targetJid, { text });
+      await ctx.sock.sendMessage(targetJid, { text });
     } else {
       // Send as Excel/CSV file
-      const XLSX = require_safe('xlsx');
       let csvContent = '';
 
       if (entries.length > 0) {
@@ -294,7 +314,7 @@ async function handleCommand(command, senderJid, res) {
       const buffer = Buffer.from(csvContent, 'utf-8');
       const fileName = `${section}_data_${new Date().toISOString().split('T')[0]}.csv`;
 
-      await sock.sendMessage(targetJid, {
+      await ctx.sock.sendMessage(targetJid, {
         document: buffer,
         fileName: fileName,
         mimetype: 'text/csv',
@@ -302,14 +322,11 @@ async function handleCommand(command, senderJid, res) {
       });
     }
 
-    try { sock.end(); } catch {}
+    await ctx.cleanup();
     return res.status(200).json({ success: true });
   } catch (err) {
-    try { sock?.end(); } catch {}
+    console.error('Command handler error:', err.message);
+    if (ctx) try { await ctx.cleanup(); } catch {}
     return res.status(500).json({ error: err.message });
   }
-}
-
-function require_safe(name) {
-  try { return require(name); } catch { return null; }
 }

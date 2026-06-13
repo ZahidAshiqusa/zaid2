@@ -1,6 +1,8 @@
 // WhatsApp Link API - Handles QR code generation for linking and session management
 const { validateAuth, unauthorized } = require('./_auth-middleware');
 const { loadSession, saveSession, saveConfig, loadConfig } = require('./_whatsapp-session');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -31,45 +33,83 @@ module.exports = async function handler(req, res) {
   // POST /api/whatsapp?action=link - Start WhatsApp linking (returns QR code)
   if (req.method === 'POST' && action === 'link') {
     try {
-      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+      // --- Clean up /tmp session dir to avoid stale state ---
+      const sessionDir = '/tmp/wa-link-session';
+      try {
+        fs.rmSync(sessionDir, { recursive: true, force: true });
+      } catch {}
+      fs.mkdirSync(sessionDir, { recursive: true });
+
+      const baileys = require('@whiskeysockets/baileys');
+      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = baileys;
       const pino = require('pino');
       const QRCode = require('qrcode');
       const { writeFile } = require('./_github');
 
-      // Use in-memory auth state for new linking
-      const { state, saveCreds } = await useMultiFileAuthState('/tmp/wa-session');
+      // --- Get Baileys version with fallback ---
+      let version;
+      try {
+        const v = await baileys.fetchLatestBaileysVersion();
+        version = v.version;
+      } catch (verErr) {
+        console.log('fetchLatestBaileysVersion failed, using fallback:', verErr.message);
+        version = [2, 3000, 1021221121]; // Fallback WA Web version
+      }
+
+      const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
       const logger = pino({ level: 'silent' });
 
-      const { version } = await fetchLatestBaileysVersion();
+      console.log('Creating WhatsApp socket with version:', version);
 
       const sock = makeWASocket({
         version,
         logger,
         auth: state,
-        browser: ['ZAID BWP', 'Chrome', '1.0.0'],
-        connectTimeoutMs: 60000,
-        qrTimeout: 55000
+        browser: baileys.Browsers.ubuntu('ZAID BWP') || ['ZAID BWP', 'Chrome', '1.0.0'],
+        printQRInTerminal: false
       });
 
-      // Wait for QR code or connection
+      // --- Wait for QR code or connection ---
       const result = await new Promise((resolve) => {
         let qrResolved = false;
-        let timeout;
+        let safetyTimeout;
+        let qrCheckTimeout;
+
+        // QR detection: if no QR in 20s, something is wrong
+        qrCheckTimeout = setTimeout(() => {
+          if (!qrResolved) {
+            console.log('QR code not received within 20 seconds');
+            qrResolved = true;
+            resolve({
+              status: 'error',
+              message: 'QR code generation timed out. The WhatsApp service may be temporarily unavailable. Please try again.'
+            });
+            try { sock.end(new Error('timeout')); } catch {}
+          }
+        }, 20000);
 
         sock.ev.on('connection.update', async (update) => {
           const { connection, lastDisconnect, qr } = update;
 
           if (qr && !qrResolved) {
             qrResolved = true;
-            // Generate QR code as data URL
-            const qrDataUrl = await QRCode.toDataURL(qr, { width: 300, margin: 2 });
-            resolve({ status: 'qr', qr: qrDataUrl });
+            clearTimeout(qrCheckTimeout);
+            console.log('QR code received, generating data URL');
+            try {
+              const qrDataUrl = await QRCode.toDataURL(qr, { width: 300, margin: 2 });
+              resolve({ status: 'qr', qr: qrDataUrl });
+            } catch (qrErr) {
+              console.error('QR toDataURL error:', qrErr.message);
+              resolve({ status: 'error', message: 'Failed to render QR code: ' + qrErr.message });
+            }
           }
 
           if (connection === 'open') {
             // Successfully linked!
             const phone = sock.user?.id?.split(':')[0] || 'unknown';
-            saveCreds();
+            console.log('WhatsApp connected, phone:', phone);
+
+            try { saveCreds(); } catch {}
 
             // Save auth state to GitHub
             const authState = {
@@ -84,8 +124,13 @@ module.exports = async function handler(req, res) {
             try {
               const { sha } = await readFile_safe('whatsapp-session');
               await writeFile('whatsapp-session', authState, sha);
-            } catch {
-              await writeFile('whatsapp-session', authState, null);
+            } catch (saveErr) {
+              console.log('First save attempt failed, trying without sha:', saveErr.message);
+              try {
+                await writeFile('whatsapp-session', authState, null);
+              } catch (saveErr2) {
+                console.error('Failed to save session to GitHub:', saveErr2.message);
+              }
             }
 
             await saveConfig({
@@ -94,36 +139,65 @@ module.exports = async function handler(req, res) {
               linkedAt: new Date().toISOString()
             });
 
-            clearTimeout(timeout);
-            resolve({ status: 'linked', phone });
+            clearTimeout(safetyTimeout);
+            clearTimeout(qrCheckTimeout);
+
+            if (!qrResolved) {
+              qrResolved = true;
+              resolve({ status: 'linked', phone });
+            } else {
+              // QR was already sent to client — send linked status via a second response isn't possible
+              // Client will detect via polling
+            }
 
             setTimeout(() => {
-              try { sock.end(); } catch {}
+              try { sock.end(new Error('done')); } catch {}
             }, 2000);
           }
 
           if (connection === 'close') {
             const reason = lastDisconnect?.error?.output?.statusCode;
-            if (reason !== DisconnectReason.loggedOut && !qrResolved) {
-              // Connection closed before QR was scanned
-              resolve({ status: 'timeout', message: 'Connection closed. Please try again.' });
+            const errMessage = lastDisconnect?.error?.message || 'unknown';
+            console.log('Connection closed, reason:', reason, 'error:', errMessage);
+
+            if (!qrResolved) {
+              qrResolved = true;
+              clearTimeout(qrCheckTimeout);
+              resolve({
+                status: 'error',
+                message: `Connection closed: ${errMessage}. Please try again.`
+              });
             }
           }
         });
 
-        // Safety timeout - resolve after 55 seconds
-        timeout = setTimeout(() => {
+        // Catch unhandled socket errors
+        sock.ev.on('messaging-history.set', () => {}); // Suppress unhandled event warnings
+
+        // Safety timeout - resolve after 55 seconds max
+        safetyTimeout = setTimeout(() => {
           if (!qrResolved) {
-            resolve({ status: 'timeout', message: 'QR code expired. Please try again.' });
+            qrResolved = true;
+            clearTimeout(qrCheckTimeout);
+            resolve({ status: 'error', message: 'Session expired. Please try again.' });
           }
-          try { sock.end(); } catch {}
+          try { sock.end(new Error('timeout')); } catch {}
         }, 55000);
       });
+
+      // Clean up temp dir
+      try {
+        fs.rmSync(sessionDir, { recursive: true, force: true });
+      } catch {}
 
       return res.status(200).json(result);
     } catch (err) {
       console.error('WhatsApp link error:', err);
-      return res.status(500).json({ error: err.message });
+      console.error('Error stack:', err.stack);
+      return res.status(500).json({
+        error: err.message,
+        hint: 'Make sure WhatsApp Baileys dependencies are installed on Vercel.'
+      });
     }
   }
 
@@ -131,7 +205,6 @@ module.exports = async function handler(req, res) {
   if (req.method === 'DELETE' && action === 'unlink') {
     try {
       const { writeFile } = require('./_github');
-      // Clear session
       const { readFile: ghRead } = require('./_github');
       try {
         const { sha } = await ghRead('whatsapp-session');

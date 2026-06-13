@@ -36,7 +36,8 @@ async function saveSession(state) {
 async function saveConfig(config) {
   try {
     const { data: existing, sha } = await readFile('whatsapp-config');
-    const merged = { ...(existing || {}), ...config };
+    const base = (existing && !Array.isArray(existing) && typeof existing === 'object') ? existing : {};
+    const merged = { ...base, ...config };
     await writeFile('whatsapp-config', merged, sha);
     return merged;
   } catch (err) {
