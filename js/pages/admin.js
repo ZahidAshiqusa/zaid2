@@ -1,5 +1,5 @@
 // Admin page entry point - admin.html
-import { fetchSection, createEntry } from '../shared/api.js';
+import { fetchSection, createEntry, getToken } from '../shared/api.js';
 import { showToast } from '../shared/notifications.js';
 import { showPasswordGate, setupLogout } from '../shared/auth.js';
 import { renderItems } from '../sections/items.js';
@@ -178,4 +178,219 @@ showPasswordGate(() => {
   loadAllSections();
   setupForms();
   setupLogout();
+  initWhatsAppStatus();
+});
+
+/* ========== WhatsApp Integration ========== */
+
+let waPollTimer = null;
+
+function waHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + getToken()
+  };
+}
+
+function showWaSection(...ids) {
+  ['wa-status-section','wa-qr-section','wa-loading-section','wa-linked-section','wa-error-section']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = ids.includes(id) ? '' : 'none';
+    });
+}
+
+async function initWhatsAppStatus() {
+  try {
+    const res = await fetch('/api/whatsapp?action=status', { headers: waHeaders() });
+    const data = await res.json();
+    updateWaButton(data.linked);
+  } catch { /* silent */ }
+}
+
+function updateWaButton(linked) {
+  const btn = document.getElementById('whatsapp-btn');
+  const txt = document.getElementById('wa-status-text');
+  if (!btn) return;
+  if (linked) {
+    btn.classList.remove('btn-success');
+    btn.classList.add('btn-wa-linked');
+    if (txt) txt.textContent = 'WA Linked';
+  } else {
+    btn.classList.remove('btn-wa-linked');
+    btn.classList.add('btn-success');
+    if (txt) txt.textContent = 'WhatsApp';
+  }
+}
+
+window.openWhatsAppModal = async function() {
+  const modal = document.getElementById('wa-modal');
+  if (modal) modal.style.display = 'flex';
+
+  // Reset UI
+  showWaSection('wa-status-section');
+  document.getElementById('wa-link-btn').style.display = 'none';
+  document.getElementById('wa-unlink-btn').style.display = 'none';
+  document.getElementById('wa-status-label').textContent = 'Checking...';
+  document.getElementById('wa-status-dot').className = 'wa-status-dot wa-dot-checking';
+  document.getElementById('wa-phone-info').style.display = 'none';
+  document.getElementById('wa-error-section').style.display = 'none';
+
+  await checkWhatsAppStatus();
+};
+
+window.closeWhatsAppModal = function() {
+  const modal = document.getElementById('wa-modal');
+  if (modal) modal.style.display = 'none';
+  if (waPollTimer) { clearTimeout(waPollTimer); waPollTimer = null; }
+};
+
+async function checkWhatsAppStatus() {
+  try {
+    const res = await fetch('/api/whatsapp?action=status', { headers: waHeaders() });
+    const data = await res.json();
+
+    if (data.linked) {
+      // Show linked state
+      document.getElementById('wa-status-label').textContent = 'Connected';
+      document.getElementById('wa-status-dot').className = 'wa-status-dot wa-dot-linked';
+      document.getElementById('wa-phone-info').style.display = 'flex';
+      document.getElementById('wa-phone-number').textContent = '+' + (data.phone || 'Unknown');
+      document.getElementById('wa-link-btn').style.display = 'none';
+      document.getElementById('wa-unlink-btn').style.display = 'inline-flex';
+      showWaSection('wa-status-section', 'wa-linked-section');
+      updateWaButton(true);
+    } else {
+      // Show not-linked state
+      document.getElementById('wa-status-label').textContent = 'Not Connected';
+      document.getElementById('wa-status-dot').className = 'wa-status-dot wa-dot-unlinked';
+      document.getElementById('wa-phone-info').style.display = 'none';
+      document.getElementById('wa-link-btn').style.display = 'inline-flex';
+      document.getElementById('wa-unlink-btn').style.display = 'none';
+      showWaSection('wa-status-section');
+      updateWaButton(false);
+    }
+  } catch (err) {
+    document.getElementById('wa-status-label').textContent = 'Error';
+    document.getElementById('wa-status-dot').className = 'wa-status-dot wa-dot-unlinked';
+    document.getElementById('wa-link-btn').style.display = 'inline-flex';
+    showWaSection('wa-status-section');
+  }
+}
+
+window.linkWhatsApp = async function() {
+  // Show loading
+  showWaSection('wa-loading-section');
+  document.getElementById('wa-loading-text').textContent = 'Generating QR code... This may take a moment.';
+  document.getElementById('wa-link-btn').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/whatsapp?action=link', {
+      method: 'POST',
+      headers: waHeaders()
+    });
+    const data = await res.json();
+
+    if (data.status === 'qr') {
+      // Show QR code
+      showWaSection('wa-qr-section');
+      document.getElementById('wa-qr-image').src = data.qr;
+
+      // Start polling for connection
+      pollWhatsAppLink();
+    } else if (data.status === 'linked') {
+      // Already linked
+      showWaSection('wa-status-section', 'wa-linked-section');
+      document.getElementById('wa-status-label').textContent = 'Connected';
+      document.getElementById('wa-status-dot').className = 'wa-status-dot wa-dot-linked';
+      document.getElementById('wa-phone-info').style.display = 'flex';
+      document.getElementById('wa-phone-number').textContent = '+' + (data.phone || 'Unknown');
+      document.getElementById('wa-unlink-btn').style.display = 'inline-flex';
+      updateWaButton(true);
+      showToast('WhatsApp', 'WhatsApp linked successfully!', 'success');
+    } else {
+      // Timeout or error
+      showWaSection('wa-status-section', 'wa-error-section');
+      document.getElementById('wa-error-text').textContent = data.message || 'Failed to generate QR code. Please try again.';
+      document.getElementById('wa-link-btn').style.display = 'inline-flex';
+    }
+  } catch (err) {
+    showWaSection('wa-status-section', 'wa-error-section');
+    document.getElementById('wa-error-text').textContent = 'Connection error: ' + err.message;
+    document.getElementById('wa-link-btn').style.display = 'inline-flex';
+  }
+};
+
+function pollWhatsAppLink() {
+  // Poll status every 3 seconds for up to 60 seconds
+  let attempts = 0;
+  const maxAttempts = 20;
+
+  async function poll() {
+    attempts++;
+    try {
+      const res = await fetch('/api/whatsapp?action=status', { headers: waHeaders() });
+      const data = await res.json();
+
+      if (data.linked) {
+        // Successfully linked!
+        showWaSection('wa-status-section', 'wa-linked-section');
+        document.getElementById('wa-status-label').textContent = 'Connected';
+        document.getElementById('wa-status-dot').className = 'wa-status-dot wa-dot-linked';
+        document.getElementById('wa-phone-info').style.display = 'flex';
+        document.getElementById('wa-phone-number').textContent = '+' + (data.phone || 'Unknown');
+        document.getElementById('wa-unlink-btn').style.display = 'inline-flex';
+        updateWaButton(true);
+        showToast('WhatsApp', 'WhatsApp linked successfully! Notifications are now active.', 'success');
+        return;
+      }
+    } catch { /* continue polling */ }
+
+    if (attempts < maxAttempts) {
+      document.getElementById('wa-loading-text').textContent =
+        'Waiting for scan... (' + attempts * 3 + 's)';
+      waPollTimer = setTimeout(poll, 3000);
+    } else {
+      showWaSection('wa-status-section', 'wa-error-section');
+      document.getElementById('wa-error-text').textContent = 'QR code expired. Please try again.';
+      document.getElementById('wa-link-btn').style.display = 'inline-flex';
+    }
+  }
+
+  waPollTimer = setTimeout(poll, 3000);
+}
+
+window.unlinkWhatsApp = async function() {
+  if (!confirm('Are you sure you want to unlink WhatsApp? Notifications will stop.')) return;
+
+  document.getElementById('wa-unlink-btn').disabled = true;
+  document.getElementById('wa-unlink-btn').innerHTML = '<span class="loading-spinner"></span> Unlinking...';
+
+  try {
+    const res = await fetch('/api/whatsapp?action=unlink', {
+      method: 'DELETE',
+      headers: waHeaders()
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast('WhatsApp', 'WhatsApp unlinked successfully.', 'success');
+      await checkWhatsAppStatus();
+    } else {
+      showToast('Error', data.error || 'Failed to unlink', 'error');
+    }
+  } catch (err) {
+    showToast('Error', 'Connection error: ' + err.message, 'error');
+  } finally {
+    document.getElementById('wa-unlink-btn').disabled = false;
+    document.getElementById('wa-unlink-btn').innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg> Unlink WhatsApp';
+  }
+};
+
+// Close modal on overlay click
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('wa-modal-overlay')) {
+    closeWhatsAppModal();
+  }
 });

@@ -172,3 +172,330 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ========== WhatsApp Modal Styles ========== */
+
+/* WhatsApp button when linked */
+.btn-wa-linked {
+  background: #25D366 !important;
+  color: #fff !important;
+  border-color: #25D366 !important;
+  animation: waPulse 2s ease-in-out infinite;
+}
+
+@keyframes waPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 211, 102, 0); }
+}
+
+/* Modal overlay */
+.wa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  animation: fadeIn 0.2s ease;
+  padding: 16px;
+}
+
+/* Modal container */
+.wa-modal {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl), 0 0 40px rgba(37, 211, 102, 0.12);
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid var(--border);
+}
+
+/* Modal header */
+.wa-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #075E54 0%, #128C7E 50%, #25D366 100%);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.wa-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.wa-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  line-height: 1;
+}
+.wa-modal-close:hover { background: rgba(255,255,255,0.3); }
+
+/* Modal body */
+.wa-modal-body {
+  padding: 22px;
+}
+
+/* Status badge */
+.wa-status-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.wa-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: fit-content;
+}
+
+.wa-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.wa-dot-linked {
+  background: #25D366;
+  box-shadow: 0 0 6px rgba(37, 211, 102, 0.6);
+}
+
+.wa-dot-unlinked {
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.wa-dot-checking {
+  background: var(--warning);
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.wa-phone-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.wa-phone-label {
+  font-weight: 500;
+}
+
+.wa-phone-number {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+
+/* QR Code Section */
+.wa-qr-section {
+  text-align: center;
+}
+
+.wa-qr-instruction {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+
+.wa-qr-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 2px solid #25D366;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.15);
+}
+
+.wa-qr-image {
+  width: 240px;
+  height: 240px;
+  border-radius: var(--radius-sm);
+  display: block;
+}
+
+.wa-qr-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Loading Section */
+.wa-loading-section {
+  text-align: center;
+  padding: 30px 0;
+}
+
+.wa-loading-spinner-lg {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--border);
+  border-top-color: #25D366;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto 16px;
+}
+
+.wa-loading-text {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Linked Section */
+.wa-linked-section {
+  text-align: center;
+}
+
+.wa-linked-icon {
+  margin-bottom: 10px;
+}
+
+.wa-linked-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #25D366;
+  margin-bottom: 8px;
+}
+
+.wa-linked-sub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.wa-linked-sub strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+/* Commands Info */
+.wa-commands-info {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: left;
+}
+
+.wa-commands-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wa-commands-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 12px;
+  align-items: center;
+}
+
+.wa-cmd {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #075E54;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.wa-cmd-desc {
+  font-size: 0.73rem;
+  color: var(--text-secondary);
+}
+
+/* Error Section */
+.wa-error-section {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+
+.wa-error-text {
+  font-size: 0.8rem;
+  color: var(--danger);
+  font-weight: 500;
+}
+
+/* Modal footer */
+.wa-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+@media (max-width: 480px) {
+  .wa-modal {
+    max-width: 100%;
+  }
+  .wa-qr-image {
+    width: 200px;
+    height: 200px;
+  }
+  .wa-commands-grid {
+    grid-template-columns: auto 1fr;
+    font-size: 0.68rem;
+  }
+}

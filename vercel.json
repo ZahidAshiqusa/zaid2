@@ -11,6 +11,15 @@
     },
     "api/data/*.js": {
       "maxDuration": 10
+    },
+    "api/whatsapp.js": {
+      "maxDuration": 60
+    },
+    "api/whatsapp-send.js": {
+      "maxDuration": 30
+    },
+    "api/whatsapp-webhook.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

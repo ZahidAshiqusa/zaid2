@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
         return items;
       });
       const newest = updated.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-      sendNotifications('Items', `New item: ${newest.name}`);
+      sendNotifications('Items', `New item: ${newest.name}`, newest);
       return res.status(201).json(newest);
     }
 

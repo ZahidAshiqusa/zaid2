@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
       });
       const newest = updated.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
       const label = newest.type === 'in' ? `Received Rs.${newest.amount} from ${newest.personOrPurpose}` : `Spent Rs.${newest.amount} for ${newest.personOrPurpose}`;
-      sendNotifications('Wallet', label);
+      sendNotifications('Wallet', label, newest);
       return res.status(201).json(newest);
     }
 
