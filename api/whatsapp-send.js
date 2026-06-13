@@ -14,9 +14,12 @@ async function createSocket() {
   const session = await loadSession();
   if (!session || !session.creds) throw new Error('WhatsApp not linked - please link from admin panel first');
 
-  const baileys = require('@whiskeysockets/baileys');
+  // Dynamic import for ESM packages
+  const baileys = await import('@whiskeysockets/baileys');
   const { default: makeWASocket, useMultiFileAuthState } = baileys;
-  const pino = require('pino');
+
+  const pinoMod = await import('pino');
+  const pino = pinoMod.default;
 
   // Restore auth state from saved session to a unique temp dir
   const sessionDir = '/tmp/wa-send-' + Date.now() + '-' + Math.random().toString(36).slice(2);
@@ -50,15 +53,18 @@ async function createSocket() {
     version = [2, 3000, 1021221121];
   }
 
+  const browser = (baileys.Browsers && baileys.Browsers.ubuntu)
+    ? baileys.Browsers.ubuntu('ZAID BWP')
+    : ['ZAID BWP', 'Chrome', '1.0.0'];
+
   const sock = makeWASocket({
     version,
     logger,
     auth: state,
-    browser: baileys.Browsers.ubuntu('ZAID BWP') || ['ZAID BWP', 'Chrome', '1.0.0'],
+    browser,
     printQRInTerminal: false
   });
 
-  // Return socket + cleanup function
   return {
     sock,
     cleanup: async () => {
@@ -195,7 +201,6 @@ module.exports = async function handler(req, res) {
         ctx = await createSocket();
         await waitForConnection(ctx.sock, 15000);
 
-        // Send to all notify numbers
         const results = [];
         for (const num of NOTIFY_NUMBERS) {
           try {
@@ -243,20 +248,13 @@ async function handleCommand(command, senderJid, res) {
       + `  📱 03299931199\n`
       + `╚═══════════════════════╝\n\n`;
 
-    // Map commands to sections
     const sectionMap = {
-      'itemsms': 'items',
-      'itemspic': 'items',
-      'walletms': 'wallet',
-      'walletpic': 'wallet',
-      'personms': 'person',
-      'personpic': 'person',
-      'maintenancems': 'maintenance',
-      'maintenancepic': 'maintenance',
-      'samplesms': 'samples',
-      'samplespic': 'samples',
-      'clippingms': 'clipping',
-      'clippingpic': 'clipping'
+      'itemsms': 'items', 'itemspic': 'items',
+      'walletms': 'wallet', 'walletpic': 'wallet',
+      'personms': 'person', 'personpic': 'person',
+      'maintenancems': 'maintenance', 'maintenancepic': 'maintenance',
+      'samplesms': 'samples', 'samplespic': 'samples',
+      'clippingms': 'clipping', 'clippingpic': 'clipping'
     };
 
     const section = sectionMap[cmd];
@@ -274,16 +272,13 @@ async function handleCommand(command, senderJid, res) {
       return res.status(200).json({ success: true });
     }
 
-    // Load data
     const { data } = await readFile(section);
     const entries = Array.isArray(data) ? data : [];
 
     if (cmd.endsWith('pic')) {
-      // Send as formatted text summary (image-style)
       let text = header + `📊 *${section.toUpperCase()} DATA*\n━━━━━━━━━━━━━━━━━━\n`;
       text += `📋 Total Entries: *${entries.length}*\n\n`;
 
-      // Show last 20 entries
       const recent = entries.slice(-20).reverse();
       recent.forEach((entry, i) => {
         const name = entry.name || entry.personName || entry.clipperName || entry.personOrPurpose || entry.subject || 'Entry';
@@ -295,7 +290,6 @@ async function handleCommand(command, senderJid, res) {
 
       await ctx.sock.sendMessage(targetJid, { text });
     } else {
-      // Send as Excel/CSV file
       let csvContent = '';
 
       if (entries.length > 0) {

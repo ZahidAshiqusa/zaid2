@@ -35,25 +35,27 @@ module.exports = async function handler(req, res) {
     try {
       // --- Clean up /tmp session dir to avoid stale state ---
       const sessionDir = '/tmp/wa-link-session';
-      try {
-        fs.rmSync(sessionDir, { recursive: true, force: true });
-      } catch {}
+      try { fs.rmSync(sessionDir, { recursive: true, force: true }); } catch {}
       fs.mkdirSync(sessionDir, { recursive: true });
 
-      const baileys = require('@whiskeysockets/baileys');
-      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = baileys;
-      const pino = require('pino');
+      // Dynamic import for ESM packages (baileys & pino are ESM-only)
+      const baileys = await import('@whiskeysockets/baileys');
+      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = baileys;
+
+      const pinoMod = await import('pino');
+      const pino = pinoMod.default;
+
       const QRCode = require('qrcode');
       const { writeFile } = require('./_github');
 
       // --- Get Baileys version with fallback ---
       let version;
       try {
-        const v = await baileys.fetchLatestBaileysVersion();
+        const v = await fetchLatestBaileysVersion();
         version = v.version;
       } catch (verErr) {
         console.log('fetchLatestBaileysVersion failed, using fallback:', verErr.message);
-        version = [2, 3000, 1021221121]; // Fallback WA Web version
+        version = [2, 3000, 1021221121];
       }
 
       const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
@@ -61,11 +63,13 @@ module.exports = async function handler(req, res) {
 
       console.log('Creating WhatsApp socket with version:', version);
 
+      const browser = (Browsers && Browsers.ubuntu) ? Browsers.ubuntu('ZAID BWP') : ['ZAID BWP', 'Chrome', '1.0.0'];
+
       const sock = makeWASocket({
         version,
         logger,
         auth: state,
-        browser: baileys.Browsers.ubuntu('ZAID BWP') || ['ZAID BWP', 'Chrome', '1.0.0'],
+        browser,
         printQRInTerminal: false
       });
 
@@ -105,13 +109,11 @@ module.exports = async function handler(req, res) {
           }
 
           if (connection === 'open') {
-            // Successfully linked!
             const phone = sock.user?.id?.split(':')[0] || 'unknown';
             console.log('WhatsApp connected, phone:', phone);
 
             try { saveCreds(); } catch {}
 
-            // Save auth state to GitHub
             const authState = {
               creds: state.creds,
               keys: Object.fromEntries(
@@ -125,12 +127,7 @@ module.exports = async function handler(req, res) {
               const { sha } = await readFile_safe('whatsapp-session');
               await writeFile('whatsapp-session', authState, sha);
             } catch (saveErr) {
-              console.log('First save attempt failed, trying without sha:', saveErr.message);
-              try {
-                await writeFile('whatsapp-session', authState, null);
-              } catch (saveErr2) {
-                console.error('Failed to save session to GitHub:', saveErr2.message);
-              }
+              try { await writeFile('whatsapp-session', authState, null); } catch {}
             }
 
             await saveConfig({
@@ -145,14 +142,9 @@ module.exports = async function handler(req, res) {
             if (!qrResolved) {
               qrResolved = true;
               resolve({ status: 'linked', phone });
-            } else {
-              // QR was already sent to client — send linked status via a second response isn't possible
-              // Client will detect via polling
             }
 
-            setTimeout(() => {
-              try { sock.end(new Error('done')); } catch {}
-            }, 2000);
+            setTimeout(() => { try { sock.end(new Error('done')); } catch {} }, 2000);
           }
 
           if (connection === 'close') {
@@ -171,10 +163,8 @@ module.exports = async function handler(req, res) {
           }
         });
 
-        // Catch unhandled socket errors
-        sock.ev.on('messaging-history.set', () => {}); // Suppress unhandled event warnings
+        sock.ev.on('messaging-history.set', () => {});
 
-        // Safety timeout - resolve after 55 seconds max
         safetyTimeout = setTimeout(() => {
           if (!qrResolved) {
             qrResolved = true;
@@ -185,10 +175,7 @@ module.exports = async function handler(req, res) {
         }, 55000);
       });
 
-      // Clean up temp dir
-      try {
-        fs.rmSync(sessionDir, { recursive: true, force: true });
-      } catch {}
+      try { fs.rmSync(sessionDir, { recursive: true, force: true }); } catch {}
 
       return res.status(200).json(result);
     } catch (err) {
@@ -196,7 +183,7 @@ module.exports = async function handler(req, res) {
       console.error('Error stack:', err.stack);
       return res.status(500).json({
         error: err.message,
-        hint: 'Make sure WhatsApp Baileys dependencies are installed on Vercel.'
+        hint: 'Baileys import or initialization failed.'
       });
     }
   }
@@ -204,8 +191,7 @@ module.exports = async function handler(req, res) {
   // DELETE /api/whatsapp?action=unlink - Unlink WhatsApp
   if (req.method === 'DELETE' && action === 'unlink') {
     try {
-      const { writeFile } = require('./_github');
-      const { readFile: ghRead } = require('./_github');
+      const { writeFile, readFile: ghRead } = require('./_github');
       try {
         const { sha } = await ghRead('whatsapp-session');
         await writeFile('whatsapp-session', null, sha);
@@ -220,7 +206,6 @@ module.exports = async function handler(req, res) {
   return res.status(400).json({ error: 'Invalid action. Use ?action=status|link|unlink' });
 };
 
-// Safe readFile that doesn't throw
 async function readFile_safe(section) {
   try {
     const { readFile } = require('./_github');
